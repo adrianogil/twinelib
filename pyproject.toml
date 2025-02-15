@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "twinelib"
+version = "0.1.0"
+description = "Python Library to parse and generate twine stories"
+authors = ["Adriano Gil <adrianogil.san@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
