@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twine-like Game</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .option {
+            color: #1E90FF;
+            cursor: pointer;
+            display: block;
+            margin: 5px 0;
+        }
+        .option:hover {
+            text-decoration: underline;
+        }
+        .paragraph {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="passage-content"></div>
+        <div id="choices"></div>
+    </div>
+
+    <script>
+        async function loadScene(sceneName) {
+            const response = await fetch(`/story/scene/${sceneName}`);
+            if (response.ok) {
+                const passageData = await response.json();
+                displayPassage(passageData);
+            } else {
+                document.getElementById('passage-content').innerText = 'Scene not found.';
+                document.getElementById('choices').innerHTML = '';
+            }
+        }
+
+        function displayPassage(passage) {
+            const contentDiv = document.getElementById('passage-content');
+            const choicesDiv = document.getElementById('choices');
+
+            // Clear existing content
+            contentDiv.innerHTML = '';
+            choicesDiv.innerHTML = '';
+
+            // Go through the passage content
+            passage.content.forEach(part => {
+                if (typeof part === 'string') {
+                    // Create paragraph elements for text
+                    const p = document.createElement('div');
+                    p.className = 'paragraph';
+                    p.innerText = part;
+                    contentDiv.appendChild(p);
+                } else if (typeof part === 'object' && part.choices) {
+                    // Create clickable choices
+                    for (const [choiceText, nextScene] of Object.entries(part.choices)) {
+                        const choiceElement = document.createElement('div');
+                        choiceElement.className = 'option';
+                        choiceElement.innerText = choiceText;
+                        choiceElement.onclick = () => loadScene(nextScene);
+                        choicesDiv.appendChild(choiceElement);
+                    }
+                }
+            });
+        }
+
+        // Load the initial scene when the page loads
+        window.onload = () => {
+            loadScene('Start');
+        };
+    </script>
+</body>
+</html>
