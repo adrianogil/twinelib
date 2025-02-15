@@ -1,43 +1,73 @@
-from twinelib import Story, Passage, render_story
+from twinelib import story_from_dict, render_story
 
-# Create passages
-passage_start = Passage(
-    pid=1,
-    name="Start",
-    position="175,75",
-    size="100,100",
-    content=(
-        "You find yourself standing at the entrance of a dark forest. "
-        "The path splits into two: one leading deeper into the woods, and the other leading to a nearby village.\n"
-        "[[Enter the forest->Forest]]\n"
-        "[[Go to the village->Village]]"
-    )
-)
+# Your input dictionary
+data = {
+    "story_name": "ChatGPT - Dragon Story - 2023.09.19",
+    "passages": [
+        {
+            "name": "Start",
+            "content": [
+                "You find yourself standing at the entrance of a dark forest.",
+                "The path splits into two: one leading deeper into the woods, and the other leading to a nearby village.",
+                {
+                    "choices": {
+                        "Enter the forest": "Forest",
+                        "Go to the village": "Village"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Forest",
+            "content": [
+                "The trees are dense and the path is overgrown. As you walk, you hear a faint crying sound.",
+                "Following the sound, you come across a baby dragon, trapped under some fallen branches.",
+                {
+                    "choices": {
+                        "Help the dragon": "HelpDragon",
+                        "Leave the forest": "Start"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Village",
+            "content": [
+                "The village is bustling with activity. You see a blacksmith, a tavern, and a magic shop.",
+                {
+                    "choices": {
+                        "Visit the blacksmith": "Blacksmith",
+                        "Go to the tavern": "Tavern",
+                        "Enter the magic shop": "MagicShop",
+                        "Return to the forest": "Start"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "HelpDragon",
+            "content": [
+                "You free the baby dragon and it nuzzles you in gratitude.",
+                "The dragon's mother appears, a majestic creature with shimmering scales.",
+                "She thanks you for saving her child and offers to grant you a wish.",
+                {
+                    "choices": {
+                        "Wish for wealth": "Wealth",
+                        "Wish for wisdom": "Wisdom",
+                        "Wish for adventure": "Adventure"
+                    }
+                }
+            ]
+        },
+    ]
+}
 
-passage_forest = Passage(
-    pid=2,
-    name="Forest",
-    position="475,50",
-    size="100,100",
-    content=(
-        "The trees are dense and the path is overgrown. As you walk, you hear a faint crying sound. "
-        "Following the sound, you come across a baby dragon, trapped under some fallen branches.\n"
-        "[[Help the dragon->HelpDragon]]\n"
-        "[[Leave the forest->Start]]"
-    )
-)
+# Create a Story instance from the dictionary.
+story = story_from_dict(data)
 
-# Create a story instance
-story = Story(
-    name="ChatGPT - Dragon Story - 2023.09.19",
-    startnode=1,
-    ifid="3f672f5c-cfdf-45bc-aec3-bc258889acad",
-    passages=[passage_start, passage_forest]
-)
-
-# Render the HTML by replacing the placeholders in the template
+# Render the HTML.
 html_output = render_story(story)
 
-# Save the output to a file
+# Save the output to a file.
 with open("dragon_story.html", "w", encoding="utf-8") as f:
     f.write(html_output)
