@@ -1,7 +1,8 @@
 from twinelib import story_from_dict, render_story
 import json
 
-data_path = "twinelib/data/dragon_story.json"
+
+data_path = "samples/dragon.json"
 
 # Load the JSON data.
 with open(data_path, "r", encoding="utf-8") as f:
