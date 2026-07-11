@@ -55,6 +55,72 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Blacksmith",
+            "content": [
+                "The blacksmith offers to forge a bright steel charm for your journey.",
+                {
+                    "choices": {
+                        "Return to the village square": "Village"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Tavern",
+            "content": [
+                "Inside the tavern, travelers trade rumors about dragons, forests, and old magic.",
+                {
+                    "choices": {
+                        "Return to the village square": "Village"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "MagicShop",
+            "content": [
+                "The magic shop glows with bottled starlight and maps that redraw themselves.",
+                {
+                    "choices": {
+                        "Return to the village square": "Village"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Wealth",
+            "content": [
+                "The dragon grants you a chest of gold, but the greater reward is the friendship you earned.",
+                {
+                    "choices": {
+                        "Begin again": "Start"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Wisdom",
+            "content": [
+                "The dragon grants you wisdom, and the forest's secrets unfold like constellations.",
+                {
+                    "choices": {
+                        "Begin again": "Start"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Adventure",
+            "content": [
+                "The dragon invites you onto its back, and together you rise toward a new horizon.",
+                {
+                    "choices": {
+                        "Begin again": "Start"
+                    }
+                }
+            ]
         }
     ]
 }

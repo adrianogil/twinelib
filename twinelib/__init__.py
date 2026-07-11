@@ -1,5 +1,58 @@
 import os
+import re
 from .models import Story, Passage
+
+TWINE_LINK_PATTERN = re.compile(r"\[\[([^\]]+)\]\]")
+
+
+def extract_link_target(link_text: str) -> str:
+    """
+    Extract the target passage name from a Twine link body.
+
+    Supports the common Twine forms:
+      - [[Target]]
+      - [[Display text->Target]]
+      - [[Target<-Display text]]
+    """
+    if "->" in link_text:
+        return link_text.split("->", 1)[1].strip()
+    if "<-" in link_text:
+        return link_text.split("<-", 1)[0].strip()
+    return link_text.strip()
+
+
+def iter_passage_links(content: str):
+    """
+    Yield target passage names linked from a passage's Twine markup.
+    """
+    for match in TWINE_LINK_PATTERN.finditer(content):
+        yield extract_link_target(match.group(1))
+
+
+def validate_story_links(story: Story) -> None:
+    """
+    Validate that all Twine links point to existing passage names.
+    """
+    passage_names = [passage.name for passage in story.passages]
+    duplicate_names = sorted({name for name in passage_names if passage_names.count(name) > 1})
+    if duplicate_names:
+        raise ValueError(f"Duplicate passage names found: {', '.join(duplicate_names)}")
+
+    passage_name_set = set(passage_names)
+    missing_links = []
+
+    for passage in story.passages:
+        for target in iter_passage_links(passage.content):
+            if not target:
+                missing_links.append((passage.name, target))
+            elif target not in passage_name_set:
+                missing_links.append((passage.name, target))
+
+    if missing_links:
+        formatted_links = ", ".join(
+            f"{source!r} -> {target!r}" for source, target in missing_links
+        )
+        raise ValueError(f"Story contains links to missing passages: {formatted_links}")
 
 def load_template() -> str:
     """
@@ -31,6 +84,7 @@ def render_story_data(story: Story) -> str:
     Build the <tw-storydata> block using the story properties and passages.
     """
     # In this simple example, many fields are given default values.
+    validate_story_links(story)
     hidden_attr = ' hidden' if getattr(story, "hidden", None) else ''
     passages_html = render_passages(story)
     storydata_html = (
@@ -88,4 +142,12 @@ def story_from_dict(data: dict) -> Story:
         passages.append(passage)
     return Story(name=story_name, passages=passages)
 
-__all__ = ["Story", "Passage", "render_story", "story_from_dict"]
+__all__ = [
+    "Story",
+    "Passage",
+    "extract_link_target",
+    "iter_passage_links",
+    "render_story",
+    "story_from_dict",
+    "validate_story_links",
+]
