@@ -2,7 +2,7 @@ import os
 import re
 from .models import Story, Passage
 
-TWINE_LINK_PATTERN = re.compile(r"\[\[([^\]]+)\]\]")
+TWINE_LINK_PATTERN = re.compile(r"\[\[([^\]]*)\]\]")
 
 
 def extract_link_target(link_text: str) -> str:
