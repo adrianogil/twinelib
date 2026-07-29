@@ -1,5 +1,7 @@
-from pydantic import BaseModel, validator
 from typing import List, Optional
+
+from pydantic import BaseModel, field_validator
+
 
 class Passage(BaseModel):
     name: str
@@ -9,7 +11,8 @@ class Passage(BaseModel):
     position: Optional[str] = None
     size: Optional[str] = None
 
-    @validator('content', pre=True)
+    @field_validator("content", mode="before")
+    @classmethod
     def parse_content(cls, value):
         # If the content is provided as a list, join the parts.
         if isinstance(value, list):
@@ -27,6 +30,7 @@ class Passage(BaseModel):
                     parts.append(str(item))
             return "\n".join(parts)
         return value
+
 
 class Story(BaseModel):
     name: str
