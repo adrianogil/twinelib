@@ -1,8 +1,14 @@
 import os
 import re
+from html import escape
+
 from .models import Story, Passage
 
 TWINE_LINK_PATTERN = re.compile(r"\[\[([^\]]*)\]\]")
+
+
+def _escape_attribute(value) -> str:
+    return escape(str(value), quote=True)
 
 
 def extract_link_target(link_text: str) -> str:
@@ -70,11 +76,15 @@ def render_passages(story: Story) -> str:
     passage_strs = []
     for passage in story.passages:
         # Build attributes string; include position and size only if present.
-        attrs = f'pid="{passage.pid}" name="{passage.name}" tags="{passage.tags}"'
+        attrs = (
+            f'pid="{_escape_attribute(passage.pid)}" '
+            f'name="{_escape_attribute(passage.name)}" '
+            f'tags="{_escape_attribute(passage.tags)}"'
+        )
         if passage.position:
-            attrs += f' position="{passage.position}"'
+            attrs += f' position="{_escape_attribute(passage.position)}"'
         if passage.size:
-            attrs += f' size="{passage.size}"'
+            attrs += f' size="{_escape_attribute(passage.size)}"'
         passage_html = f'        <tw-passagedata {attrs}>{passage.content}</tw-passagedata>'
         passage_strs.append(passage_html)
     return "\n".join(passage_strs)
@@ -88,7 +98,8 @@ def render_story_data(story: Story) -> str:
     hidden_attr = ' hidden' if getattr(story, "hidden", None) else ''
     passages_html = render_passages(story)
     storydata_html = (
-        f'<tw-storydata name="{story.name}" startnode="{story.startnode}" '
+        f'<tw-storydata name="{_escape_attribute(story.name)}" '
+        f'startnode="{_escape_attribute(story.startnode)}" '
         f'creator="Twine" creator-version="2.10.0" '
         f'format="Harlowe" format-version="3.3.9" '
         f'ifid="" options="debug" tags="" zoom="1"{hidden_attr}>\n'
@@ -107,7 +118,7 @@ def render_story(story: Story) -> str:
     """
     template = load_template()
     story_data_html = render_story_data(story)
-    html = template.replace("{{TWINE_STORY_NAME}}", story.name) \
+    html = template.replace("{{TWINE_STORY_NAME}}", escape(story.name)) \
                    .replace("{{TWINE_STORY_DATA}}", story_data_html)
     return html
 
