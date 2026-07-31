@@ -1,8 +1,9 @@
 import os
 import re
 from html import escape
+from typing import Optional
 
-from .models import Story, Passage
+from .models import Passage, Story, StoryStats
 
 TWINE_LINK_PATTERN = re.compile(r"\[\[([^\]]*)\]\]")
 
@@ -59,6 +60,75 @@ def validate_story_links(story: Story) -> None:
             f"{source!r} -> {target!r}" for source, target in missing_links
         )
         raise ValueError(f"Story contains links to missing passages: {formatted_links}")
+
+
+def compute_story_stats(
+    story: Story, start_passage: Optional[str] = None
+) -> StoryStats:
+    """
+    Compute passage and link statistics for a valid story graph.
+
+    When ``start_passage`` is omitted, the passage whose ``pid`` matches the
+    story's ``startnode`` is used. Stories constructed without passage IDs use
+    their first passage as the start.
+    """
+    validate_story_links(story)
+
+    links_by_passage = {
+        passage.name: list(iter_passage_links(passage.content))
+        for passage in story.passages
+    }
+
+    if not story.passages:
+        if start_passage is not None:
+            raise ValueError(f"Start passage not found: {start_passage!r}")
+        return StoryStats(
+            passage_count=0,
+            link_count=0,
+            dead_end_passages=[],
+            unreachable_passages=[],
+        )
+
+    if start_passage is None:
+        matching_start_passages = [
+            passage.name
+            for passage in story.passages
+            if passage.pid == story.startnode
+        ]
+        if matching_start_passages:
+            start_passage = matching_start_passages[0]
+        elif all(passage.pid is None for passage in story.passages):
+            start_passage = story.passages[0].name
+        else:
+            raise ValueError(
+                f"No passage has the story startnode pid: {story.startnode!r}"
+            )
+    elif start_passage not in links_by_passage:
+        raise ValueError(f"Start passage not found: {start_passage!r}")
+
+    reachable = set()
+    pending = [start_passage]
+    while pending:
+        passage_name = pending.pop()
+        if passage_name in reachable:
+            continue
+        reachable.add(passage_name)
+        pending.extend(links_by_passage[passage_name])
+
+    return StoryStats(
+        passage_count=len(story.passages),
+        link_count=sum(len(targets) for targets in links_by_passage.values()),
+        dead_end_passages=[
+            passage.name
+            for passage in story.passages
+            if not links_by_passage[passage.name]
+        ],
+        unreachable_passages=[
+            passage.name
+            for passage in story.passages
+            if passage.name not in reachable
+        ],
+    )
 
 def load_template() -> str:
     """
@@ -157,6 +227,8 @@ def story_from_dict(data: dict) -> Story:
 __all__ = [
     "Story",
     "Passage",
+    "StoryStats",
+    "compute_story_stats",
     "extract_link_target",
     "iter_passage_links",
     "render_story",

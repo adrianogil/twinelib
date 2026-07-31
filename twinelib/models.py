@@ -36,3 +36,10 @@ class Story(BaseModel):
     name: str
     passages: List[Passage]
     startnode: Optional[int] = 1
+
+
+class StoryStats(BaseModel):
+    passage_count: int
+    link_count: int
+    dead_end_passages: List[str]
+    unreachable_passages: List[str]
