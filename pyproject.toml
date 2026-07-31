@@ -9,7 +9,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 pydantic = "^2.10.6"
+flask = { version = "^3.1.0", optional = true }
 
+[tool.poetry.extras]
+server = ["flask"]
 
 [build-system]
 requires = ["poetry-core"]
