@@ -136,9 +136,10 @@ def story_from_dict(data: dict) -> Story:
     passages = []
     pid_counter = 1
     for p in passages_data:
-        p["pid"] = pid_counter
+        passage_data = p.copy()
+        passage_data["pid"] = pid_counter
         pid_counter += 1
-        passage = Passage(**p)
+        passage = Passage(**passage_data)
         passages.append(passage)
     return Story(name=story_name, passages=passages)
 
