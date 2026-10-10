@@ -130,6 +130,87 @@ def compute_story_stats(
         ],
     )
 
+
+def _escape_mermaid_label(value: str) -> str:
+    """Keep user text inside quoted Mermaid labels, never in diagram syntax."""
+    # Mermaid uses #<decimal>; entities (not HTML's &#<decimal>;).
+    # Collapse line breaks/tabs so a label cannot introduce another statement.
+    return "".join(
+        "\ufffd" if ord(char) < 32 or 127 <= ord(char) <= 159
+        else f"#{ord(char)};" if char in '\"&<>|#`\\[]{}()' else char
+        for char in " ".join(value.split())
+    )
+
+
+def render_story_map(
+    story: Story,
+    start_passage: Optional[str] = None,
+    direction: str = "TD",
+) -> str:
+    """Return a Mermaid flowchart of passages and labeled Twine choices.
+
+    Endings are passages with no outgoing links. Unreachable passages are
+    measured from the same start used by ``compute_story_stats``. This is a
+    static map of supported Twine links; macros/conditions are not evaluated.
+    The returned source has no Markdown fence and can be saved as a .mmd file.
+    """
+    if direction not in ("TD", "TB", "BT", "LR", "RL"):
+        raise ValueError("Mermaid direction must be TD, TB, BT, LR, or RL")
+
+    stats = compute_story_stats(story, start_passage=start_passage)
+    endings = set(stats.dead_end_passages)
+    unreachable = set(stats.unreachable_passages)
+    node_ids = {
+        passage.name: f"p{index}" for index, passage in enumerate(story.passages)
+    }
+    lines = [f"flowchart {direction}"]
+    for passage in story.passages:
+        annotations = []
+        if passage.name in endings:
+            annotations.append("ending")
+        if passage.name in unreachable:
+            annotations.append("unreachable")
+        label = passage.name
+        if annotations:
+            label += " (" + ", ".join(annotations) + ")"
+        label = _escape_mermaid_label(label)
+        node_id = node_ids[passage.name]
+        if passage.name in endings:
+            lines.append(f'    {node_id}(["{label}"])')
+        else:
+            lines.append(f'    {node_id}["{label}"]')
+
+    for passage in story.passages:
+        for match in TWINE_LINK_PATTERN.finditer(passage.content):
+            body = match.group(1)
+            target = extract_link_target(body)
+            if "->" in body:
+                choice = body.split("->", 1)[0].strip()
+            elif "<-" in body:
+                choice = body.split("<-", 1)[1].strip()
+            else:
+                choice = target
+            source_id, target_id = node_ids[passage.name], node_ids[target]
+            if choice:
+                label = _escape_mermaid_label(choice)
+                lines.append(f'    {source_id} -->|"{label}"| {target_id}')
+            else:
+                lines.append(f"    {source_id} --> {target_id}")
+
+    if unreachable:
+        lines.append(
+            "    classDef unreachable fill:#fff1f2,stroke:#be123c,"
+            "stroke-width:2px,stroke-dasharray:5 5,color:#881337"
+        )
+        ids = ",".join(
+            node_ids[passage.name]
+            for passage in story.passages
+            if passage.name in unreachable
+        )
+        lines.append(f"    class {ids} unreachable")
+    return "\n".join(lines) + "\n"
+
+
 def load_template() -> str:
     """
     Load the template file from the templates directory.
@@ -232,6 +313,7 @@ __all__ = [
     "extract_link_target",
     "iter_passage_links",
     "render_story",
+    "render_story_map",
     "story_from_dict",
     "validate_story_links",
 ]
